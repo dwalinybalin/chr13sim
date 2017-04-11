@@ -60,7 +60,20 @@ ui <- shinyUI(ui = fluidPage(
                                        min = 17920000, max = 114100000, value = 22000000, step = 1000000),
                           numericInput(inputId = "CelUPDDelRec",
                                        label = "Cellularity of the reciprocal homozygous deletion by UPD:",
-                                       min = 0, max = 100, value = 0, step = 1)),
+                                       min = 0, max = 100, value = 0, step = 1),
+                          checkboxInput(inputId = "UPDdel2",
+                                        label = strong("Second Homozygous deletion by UPD"),
+                                        value = FALSE),
+                          conditionalPanel(condition = "input.UPDdel2 == true",
+                                           numericInput(inputId = "CelUPDDel2",
+                                                        label = "Cellularity of the second Homozygous deletion by UPD:",
+                                                        min = 0, max = 100, value = 0, step = 1),
+                                           numericInput(inputId = "UPDDel2break",
+                                                        label = "Breakpoint of the second Homozygous deletion by UPD:",
+                                                        min = 17920000, max = 114100000, value = 21000000, step = 1000000),
+                                           numericInput(inputId = "CelUPDDel2Rec",
+                                                        label = "Cellularity of the reciprocal second homozygous deletion by UPD:",
+                                                        min = 0, max = 100, value = 0, step = 1))),
          checkboxInput(inputId = "UPDres",
                        label = strong("Rescue UPD"),
                        value = FALSE),
@@ -131,6 +144,14 @@ server <- shinyServer(function(input, output, session) {
                          inputId = "CelUPDDelRec",
                          value = 0)
     }
+    if(!input$UPDdel2){
+      updateNumericInput(session,
+                        inputId = "CelUPDDel2",
+                        value = 0)
+      updateNumericInput(session,
+                         inputId = "CelUPDDel2Rec",
+                        value = 0)
+    } 
     if(!input$Homdel){
       updateNumericInput(session,
                          inputId = "CelDelHom",
@@ -159,13 +180,14 @@ server <- shinyServer(function(input, output, session) {
       set.seed(1113)
       pos <- sort(runif(input$nprobes, min=17920000, max=114100000))
       ChrUPDDel <- input$CelUPDDel*2
+      ChrUPDDel2 <- input$CelUPDDel2*2
       ChrDelHom <- input$CelDelHom*2
       ChrDelHet <- input$CelDelHet
-      ChrDel <- (ChrDelHet + ChrUPDDel + ChrDelHom)
+      ChrDel <- (ChrDelHet + ChrUPDDel + ChrUPDDel2 + ChrDelHom)
       LRRDel <- LRRCalc(2 - ChrDel/100)
-      LRRDel1 <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + 0.5*ChrDelHom)/100)
+      LRRDel1 <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom)/100)
       LRRDel2 <- LRRCalc(2 - (0.5*ChrDelHom)/100)
-      CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDRes - input$CelUPDResRec - input$CelDelHom - input$CelUPDRes2 - input$CelUPDRes2Rec
+      CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDDel2 - input$CelUPDDel2Rec - input$CelUPDRes - input$CelUPDResRec - input$CelDelHom -  input$CelUPDRes2 - input$CelUPDRes2Rec
 
       BAFAA <- rnorm(100000, 0, input$BAFdev)
       BAFAA[BAFAA < 0] <- abs(BAFAA[BAFAA < 0])
@@ -173,27 +195,56 @@ server <- shinyServer(function(input, output, session) {
       BAFBB <- rnorm(100000, 1, input$BAFdev)
       BAFBB[BAFBB > 1] <- 2 - BAFBB[BAFBB > 1]
       
-      BdevDel <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDResRec + 2*input$CelUPDRes2Rec)) # Depèn de molts factors el BAF de la delecció
-      BdevDel1 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelUPDDelRec + input$CelDelHom))
-      BdevDel2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + input$CelDelHom))
+      BdevDel <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + 2*input$CelUPDResRec + 2*input$CelUPDRes2Rec)) # Depèn de molts factors el BAF de la delecció
+      BdevDel1 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+      BdevDel2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHom))
       BdevUPDDel <- UPDBdevCalc(input$CelUPDDel - input$CelUPDDelRec)
+      BdevUPDDel2 <- UPDBdevCalc(input$CelUPDDel2 - input$CelUPDDel2Rec)
       BdevUPDRes <- UPDBdevCalc(input$CelUPDRes - input$CelUPDResRec)
       BdevUPDRes2 <- UPDBdevCalc(input$CelUPDRes2 - input$CelUPDRes2Rec)
       
+      UPDDel <- pos >= input$UPDHomoDelbreak
+      UPDDel2 <- pos >= input$UPDDel2break
+      UPDRes <- pos >= input$UPDRescuebreak
+      UPDRes2 <- pos >= input$UPDRescuebreak2
+      
       BAF <- sample(c(BAFAA, BAFAB, BAFBB), size = length(pos), replace = T)
-      if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
-        if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
-          BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
-          BAF[pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak), replace = T)
-        } else {
-          BAF[pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
-          BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
-        }
-      } else {
-        BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak), replace = T)
-        BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
-      }
-      BAF[pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2 ] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2), replace = T)
+      
+      BAF[UPDDel & !(UPDDel2 | UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(UPDDel & !(UPDDel2 | UPDRes | UPDRes2)), replace = T)
+      BAF[UPDDel2 & !(UPDDel | UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel2, input$BAFdev), BAFBB), size = sum(UPDDel2 & !(UPDDel | UPDRes | UPDRes2)), replace = T)
+      BAF[UPDRes & !(UPDDel | UPDDel2 | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(UPDRes & !(UPDDel | UPDDel2 | UPDRes2)), replace = T)
+      BAF[UPDRes2 & !(UPDDel | UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes2, input$BAFdev), BAFBB), size = sum(UPDRes2 & !(UPDDel | UPDDel2 | UPDRes)), replace = T)
+      
+      BAF[UPDDel & UPDDel2 & !(UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDDel2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & !(UPDRes | UPDRes2)), replace = T)
+      BAF[UPDDel & UPDRes & !(UPDDel2 | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes & !(UPDDel2 | UPDRes2)), replace = T)
+      BAF[UPDDel & UPDRes2 & !(UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes2 & !(UPDDel2 | UPDRes)), replace = T)
+      BAF[UPDDel2 & UPDRes & !(UPDDel | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2+BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes & !(UPDDel | UPDRes2)), replace = T)
+      BAF[UPDDel2 & UPDRes2 & !(UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes2 & !(UPDDel2 | UPDRes)), replace = T)
+      BAF[UPDRes & UPDRes2 & !(UPDDel | UPDDel2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDRes & UPDRes2 & !(UPDDel | UPDDel2)), replace = T)
+      
+      BAF[UPDDel & UPDDel2 & UPDRes & !UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes & !UPDRes2), replace = T)
+      BAF[UPDDel & UPDDel2 & UPDRes2 & !UPDRes] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes2 & !UPDRes), replace = T)
+      BAF[UPDDel & UPDRes & UPDRes2 & !UPDDel2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes & UPDRes2 & !UPDDel2), replace = T)
+      BAF[UPDDel2 & UPDRes & UPDRes2 & !UPDDel] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2 + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes & UPDRes2 & !UPDDel), replace = T)
+      
+      BAF[UPDDel2 & UPDDel & UPDRes & !UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDDel2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & !(UPDRes | UPDRes2)), replace = T)
+      
+      BAF[UPDDel & UPDDel2 & UPDRes & UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes & UPDRes2), replace = T)
+      
+      # if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
+      #   if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
+      #     BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
+      #     BAF[pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak), replace = T)
+      #   } else {
+      #     BAF[pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
+      #     BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
+      #   }
+      # } else {
+      #   BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak), replace = T)
+      #   BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
+      # }
+      
+      #BAF[pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2 ] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2), replace = T)
       
       del1 <- pos >= input$DelLBP & pos <= input$DelRBP
       del2 <- pos >= input$DelLBP2 & pos <= input$DelRBP2
@@ -242,13 +293,14 @@ server <- shinyServer(function(input, output, session) {
      }
      
      ChrUPDDel <- input$CelUPDDel*2
+     ChrUPDDel2 <- input$CelUPDDel2*2
      ChrDelHom <- input$CelDelHom*2
      ChrDelHet <- input$CelDelHet
-     ChrDel <- (ChrDelHet + ChrUPDDel + ChrDelHom) # We suppose that all the deleted chromosomes coincide in a given region
+     ChrDel <- (ChrDelHet + ChrUPDDel + ChrUPDDel2 + ChrDelHom)
      LRRDel <- LRRCalc(2 - ChrDel/100)
-     LRRDel1 <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + 0.5*ChrDelHom)/100)
+     LRRDel1 <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom)/100)
      LRRDel2 <- LRRCalc(2 - (0.5*ChrDelHom)/100)
-     CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDRes - input$CelUPDResRec - input$CelDelHom - input$CelUPDRes2 - input$CelUPDRes2Rec
+     CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDDel2 - input$CelUPDDel2Rec - input$CelUPDRes - input$CelUPDResRec - input$CelDelHom -  input$CelUPDRes2 - input$CelUPDRes2Rec
      
      BAFAA <- rnorm(100000, 0, input$BAFdev)
      BAFAA[BAFAA < 0] <- abs(BAFAA[BAFAA < 0])
@@ -256,27 +308,56 @@ server <- shinyServer(function(input, output, session) {
      BAFBB <- rnorm(100000, 1, input$BAFdev)
      BAFBB[BAFBB > 1] <- 2 - BAFBB[BAFBB > 1]
      
-     BdevDel <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDResRec + 2*input$CelUPDRes2Rec)) # Depèn de molts factors el BAF de la delecció
-     BdevDel1 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelUPDDelRec + input$CelDelHom))
-     BdevDel2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + input$CelDelHom))
+     BdevDel <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + 2*input$CelUPDResRec + 2*input$CelUPDRes2Rec)) # Depèn de molts factors el BAF de la delecció
+     BdevDel1 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+     BdevDel2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHom))
      BdevUPDDel <- UPDBdevCalc(input$CelUPDDel - input$CelUPDDelRec)
+     BdevUPDDel2 <- UPDBdevCalc(input$CelUPDDel2 - input$CelUPDDel2Rec)
      BdevUPDRes <- UPDBdevCalc(input$CelUPDRes - input$CelUPDResRec)
      BdevUPDRes2 <- UPDBdevCalc(input$CelUPDRes2 - input$CelUPDRes2Rec)
      
+     UPDDel <- pos >= input$UPDHomoDelbreak
+     UPDDel2 <- pos >= input$UPDDel2break
+     UPDRes <- pos >= input$UPDRescuebreak
+     UPDRes2 <- pos >= input$UPDRescuebreak2
+     
      BAF <- sample(c(BAFAA, BAFAB, BAFBB), size = length(pos), replace = T)
-     if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
-       if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
-         BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
-         BAF[pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak), replace = T)
-       } else {
-         BAF[pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
-         BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
-       }
-     } else {
-       BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak), replace = T)
-       BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
-     }
-     BAF[pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2 ] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2), replace = T)
+     
+     BAF[UPDDel & !(UPDDel2 | UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(UPDDel & !(UPDDel2 | UPDRes | UPDRes2)), replace = T)
+     BAF[UPDDel2 & !(UPDDel | UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel2, input$BAFdev), BAFBB), size = sum(UPDDel2 & !(UPDDel | UPDRes | UPDRes2)), replace = T)
+     BAF[UPDRes & !(UPDDel | UPDDel2 | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(UPDRes & !(UPDDel | UPDDel2 | UPDRes2)), replace = T)
+     BAF[UPDRes2 & !(UPDDel | UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes2, input$BAFdev), BAFBB), size = sum(UPDRes2 & !(UPDDel | UPDDel2 | UPDRes)), replace = T)
+     
+     BAF[UPDDel & UPDDel2 & !(UPDRes | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDDel2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & !(UPDRes | UPDRes2)), replace = T)
+     BAF[UPDDel & UPDRes & !(UPDDel2 | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes & !(UPDDel2 | UPDRes2)), replace = T)
+     BAF[UPDDel & UPDRes2 & !(UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes2 & !(UPDDel2 | UPDRes)), replace = T)
+     BAF[UPDDel2 & UPDRes & !(UPDDel | UPDRes2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2+BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes & !(UPDDel | UPDRes2)), replace = T)
+     BAF[UPDDel2 & UPDRes2 & !(UPDDel2 | UPDRes)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes2 & !(UPDDel2 | UPDRes)), replace = T)
+     BAF[UPDRes & UPDRes2 & !(UPDDel | UPDDel2)] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDRes & UPDRes2 & !(UPDDel | UPDDel2)), replace = T)
+     
+     BAF[UPDDel & UPDDel2 & UPDRes & !UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes & !UPDRes2), replace = T)
+     BAF[UPDDel & UPDDel2 & UPDRes2 & !UPDRes] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes2 & !UPDRes), replace = T)
+     BAF[UPDDel & UPDRes & UPDRes2 & !UPDDel2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDRes & UPDRes2 & !UPDDel2), replace = T)
+     BAF[UPDDel2 & UPDRes & UPDRes2 & !UPDDel] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel2 + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel2 & UPDRes & UPDRes2 & !UPDDel), replace = T)
+     
+     BAF[UPDDel2 & UPDDel & UPDRes & !UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel+BdevUPDDel2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & !(UPDRes | UPDRes2)), replace = T)
+     
+     BAF[UPDDel & UPDDel2 & UPDRes & UPDRes2] <- sample(c(BAFAA, BAFcalc(100000, (BdevUPDDel + BdevUPDDel2 + BdevUPDRes + BdevUPDRes2), input$BAFdev), BAFBB), size = sum(UPDDel & UPDDel2 & UPDRes & UPDRes2), replace = T)
+     
+     # if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
+     #   if (input$UPDHomoDelbreak >= input$UPDRescuebreak){
+     #     BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
+     #     BAF[pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak2 & pos < input$UPDHomoDelbreak), replace = T)
+     #   } else {
+     #     BAF[pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDRes, input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
+     #     BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDHomoDelbreak), replace = T)
+     #   }
+     # } else {
+     #   BAF[pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak] <- sample(c(BAFAA, BAFcalc(100000, BdevUPDDel, input$BAFdev), BAFBB), size = sum(pos >= input$UPDHomoDelbreak & pos < input$UPDRescuebreak), replace = T)
+     #   BAF[pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDDel+BdevUPDRes), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos < input$UPDRescuebreak2), replace = T)
+     # }
+     
+     #BAF[pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2 ] <- sample(c(BAFAA, BAFcalc(100000, abs(BdevUPDRes+BdevUPDDel+BdevUPDRes2), input$BAFdev), BAFBB), size = sum(pos >= input$UPDRescuebreak & pos >= input$UPDHomoDelbreak & pos >= input$UPDRescuebreak2), replace = T)
      
      del1 <- pos >= input$DelLBP & pos <= input$DelRBP
      del2 <- pos >= input$DelLBP2 & pos <= input$DelRBP2
@@ -293,6 +374,7 @@ server <- shinyServer(function(input, output, session) {
      LRR[del1 & del2] <- rnorm(sum(del1 & del2), LRRDel, input$LRRdev)
      LRR[del1 & !del2] <- rnorm(sum(del1 & !del2), LRRDel1, input$LRRdev)
      LRR[!del1 & del2] <- rnorm(sum(!del1 & del2), LRRDel2, input$LRRdev)
+     
      par(mar = c(5, 4, 4, 4) + 0.1)
      if (input$type == "LRR from -1 to 1") {
        plot(pos, LRR, ylim = c(-1, 1), las = 1, pch =".", cex = 2, col = 1, ylab = "",xlab = "", main = input$sample, xaxt="n", yaxt="n", xlim=xlimits)
@@ -317,20 +399,24 @@ server <- shinyServer(function(input, output, session) {
    output$table <- renderDataTable({
      pos <- sort(runif(input$nprobes, min=17920000, max=114100000))
      ChrUPDDel <- input$CelUPDDel*2
+     ChrUPDDel2 <- input$CelUPDDel2*2
      ChrDelHom <- input$CelDelHom*2
      ChrDelHet <- input$CelDelHet
-     ChrDel <- (ChrDelHet + ChrUPDDel + ChrDelHom)
+     ChrDel <- (ChrDelHet + ChrUPDDel + ChrUPDDel2 + ChrDelHom)
      LRRDel <- LRRCalc(2 -ChrDel/100)
-     LRRDelA <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + 0.5*ChrDelHom)/100)
+     LRRDelA <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom)/100)
      LRRDelB <- LRRCalc(2 - (0.5*ChrDelHom)/100)
-     CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDRes - input$CelUPDResRec - input$CelDelHom - input$CelUPDRes2 - input$CelUPDRes2Rec
+     CelWT <- 100 - input$CelDelHet - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDDel2 - input$CelUPDDel2Rec- input$CelUPDRes - input$CelUPDResRec - input$CelDelHom - input$CelUPDRes2 - input$CelUPDRes2Rec
      BdevDel <-  abs(0.5 - (CelWT + 2*input$CelUPDRes) / (2*CelWT + 2*input$CelUPDRes + input$CelDelHet)) # Depends on a lot of elements
      BdevUPDDel <- UPDBdevCalc(abs(input$CelUPDDel - input$CelUPDDelRec))
+     BdevUPDDel2 <- UPDBdevCalc(abs(input$CelUPDDel2 - input$CelUPDDel2Rec))
      BdevUPDRes <- UPDBdevCalc(abs(input$CelUPDRes - input$CelUPDResRec))
      data <- data.frame(WT=round(CelWT, 2), 
                         HetDel=round(input$CelDelHet, 2), 
                         UPDDel=round(input$CelUPDDel, 2),
                         UPDDelRec=round(input$CelUPDDelRec, 2),
+                        UPDDel2=round(input$CelUPDDel2, 2),
+                        UPDDel2Rec=round(input$CelUPDDel2Rec, 2),
                         UPDRes=round(input$CelUPDRes, 2), 
                         UPDResRec=round(input$CelUPDResRec, 2),
                         UPDRes2=round(input$CelUPDRes2, 2),
