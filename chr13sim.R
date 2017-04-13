@@ -52,6 +52,9 @@ ui <- shinyUI(ui = fluidPage(
                        label = strong("Second heterozygous deletion"),
                        value = FALSE),
          conditionalPanel(condition = "input.DelHet2 == true",
+                          checkboxInput(inputId = "Alt",
+                                        label = strong("Alternative allele"),
+                                        value = FALSE),
                           numericInput(inputId = "CelDelHet2",
                                        label = "Cellularity of the second heterozygous deletion:",
                                        min = 0,
@@ -156,6 +159,16 @@ server <- shinyServer(function(input, output, session) {
        updateNumericInput(session,
                           inputId = "CelDelHet2",
                           value = 0)
+       updateCheckboxInput(session,
+                          inputId = "Alt",
+                          value = FALSE)
+       updateNumericInput(session,
+                          inputId = "Del2LBP",
+                          value = 49500000)
+       updateNumericInput(session,
+                          inputId = "Del2RBP",
+                          value = 50500000)
+       
      }
      if(!input$UPDdel){
        updateNumericInput(session,
@@ -177,6 +190,12 @@ server <- shinyServer(function(input, output, session) {
        updateNumericInput(session,
                           inputId = "CelDelHom",
                           value = 0)
+       updateNumericInput(session,
+                          inputId = "DelLBP2",
+                          value = 49500000)
+       updateNumericInput(session,
+                          inputId = "DelRBP2",
+                          value = 50500000)
      }
      if(!input$UPDres) {
        updateNumericInput(session,
@@ -223,14 +242,24 @@ server <- shinyServer(function(input, output, session) {
       BAFBB <- rnorm(100000, 1, input$BAFdev)
       BAFBB[BAFBB > 1] <- 2 - BAFBB[BAFBB > 1]
       
-      BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
-      BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + 2*input$CelDelHom))
-      BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
-      BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
-      BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2))
-      BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2))
-      BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))
-      
+      if (!input$Alt) {
+        BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+        BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+        BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
+        BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
+        BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+        BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2))
+        BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))  
+      } else {
+        BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+        BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+        BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
+        BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
+        BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+        BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2 + input$CelDelHom))
+        BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))  
+      }
+
       BdevUPDDel <- UPDBdevCalc(input$CelUPDDel - input$CelUPDDelRec)
       BdevUPDDel2 <- UPDBdevCalc(input$CelUPDDel2 - input$CelUPDDel2Rec)
       BdevUPDRes <- UPDBdevCalc(input$CelUPDRes - input$CelUPDResRec)
@@ -364,13 +393,23 @@ server <- shinyServer(function(input, output, session) {
      BAFBB <- rnorm(100000, 1, input$BAFdev)
      BAFBB[BAFBB > 1] <- 2 - BAFBB[BAFBB > 1]
      
-     BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
-     BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + 2*input$CelDelHom))
-     BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
-     BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
-     BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2))
-     BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2))
-     BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))
+     if (!input$Alt) {
+       BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+       BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+       BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
+       BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
+       BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+       BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2))
+       BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))  
+     } else {
+       BdevDelCommon <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+       BdevDelHet <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom))
+       BdevDelHom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHet2 + input$CelDelHom))
+       BdevDelHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom + 2*input$CelUPDDel + 2*input$CelUPDDel2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + 2*input$CelDelHet + 2*input$CelDelHom + input$CelDelHet2))
+       BdevDelHetHom <- abs(0.5 - (CelWT + input$CelDelHet2 + 2*input$CelUPDRes + 2*input$CelUPDRes2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + input$CelDelHet + 2*input$CelDelHet2 + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec))
+       BdevDelHet2Hom <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + 2*input$CelUPDDel + 2*input$CelUPDDel2 + input$CelDelHet + input$CelDelHet2 + input$CelDelHom) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelDelHet + 2*input$CelUPDDel + 2*input$CelUPDDelRec + 2*input$CelUPDDel2 + 2*input$CelUPDDel2Rec + input$CelDelHet2 + input$CelDelHom))
+       BdevDelHetHet2 <- abs(0.5 - (CelWT + 2*input$CelUPDRes + 2*input$CelUPDRes2 + input$CelDelHet2) / (2*CelWT + 2*input$CelUPDRes + 2*input$CelUPDResRec + 2*input$CelUPDRes2 + 2*input$CelUPDRes2Rec + 2*input$CelUPDDelRec + 2*input$CelUPDDel2Rec + input$CelDelHom + input$CelDelHet + input$CelDelHet2))  
+     }
      
      BdevUPDDel <- UPDBdevCalc(input$CelUPDDel - input$CelUPDDelRec)
      BdevUPDDel2 <- UPDBdevCalc(input$CelUPDDel2 - input$CelUPDDel2Rec)
@@ -512,9 +551,6 @@ server <- shinyServer(function(input, output, session) {
                         LRRDelHet2Hom=round(LRRDelHet2Hom, 2),
                         LRRDelHetHet2=round(LRRDelHetHet2, 2),
                         LRRDelCommon=round(LRRDelCommon, 2))
-                        #UPDDelRec=round(input$CelUPDDelRec, 2),
-                        #UPDResRec=round(input$CelUPDResRec, 2),
-                        #UPDRes2Rec=round(input$CelUPDRes2Rec, 2))
      data
    })
 })
