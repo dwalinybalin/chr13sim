@@ -283,15 +283,16 @@ server <- shinyServer(function(input, output, session) {
       delHet2 <- pos >= input$Del2LBP & pos <= input$Del2RBP
       delHom <- pos >= input$DelLBP2 & pos <= input$DelRBP2
       
-      BAF[delHet & delHet2 & delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelCommon, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & delHom), replace = T)
+      BAF[delHet & !(delHom | delHet2)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet, input$BAFdev), BAFBB), size = sum(delHet & !(delHom | delHet2)), replace = T)
+      BAF[delHet2 & !(delHom | delHet)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2, input$BAFdev), BAFBB), size = sum(delHet2 & !(delHom | delHet)), replace = T)
+      BAF[delHom & !(delHet | delHet2)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHom, input$BAFdev), BAFBB), size = sum(delHom & !(delHet | delHet2)), replace = T)
       
       BAF[delHet & delHet2 & !delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHetHet2, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & !delHom), replace = T)
       BAF[delHet & delHom & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHetHom, input$BAFdev), BAFBB), size = sum(delHet & delHom & !delHet2), replace = T)
       BAF[delHet2 & delHom & !delHet] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2Hom, input$BAFdev), BAFBB), size = sum(delHet2 & delHom & !delHet), replace = T)
+
+      BAF[delHet & delHet2 & delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelCommon, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & delHom), replace = T)
       
-      BAF[delHet & !delHom & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet, input$BAFdev), BAFBB), size = sum(delHet & !delHom & !delHet2), replace = T)
-      BAF[delHet2 & !delHom & !delHet] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2, input$BAFdev), BAFBB), size = sum(delHet2 & !delHom & !delHet), replace = T)
-      BAF[delHom & !delHet & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHom, input$BAFdev), BAFBB), size = sum(delHom & !delHet & !delHet2), replace = T)
       
       #if (input$Homdel) BAF[pos > input$DelLBP2 & pos <= input$DelRBP2] <- sample(c(BAFAA, BAFcalc(100000, BdevDel2, input$BAFdev), BAFBB), size = sum(pos > input$DelLBP2 & pos <= input$DelRBP2), replace = T)
       
@@ -300,15 +301,15 @@ server <- shinyServer(function(input, output, session) {
       
       LRR <- rnorm(length(pos), 0, input$LRRdev)
       
-      LRR[delHet & delHet2 & !delHom] <- rnorm(sum(delHet & delHet2 & !delHom), LRRDelCommon, input$LRRdev)
+      LRR[delHet & !(delHom | delHet2)] <- rnorm(sum(delHet & !(delHom | delHet2)), LRRDelHet, input$LRRdev)
+      LRR[delHet2 & !(delHom | delHet)] <- rnorm(sum(delHet2 & !(delHom | delHet)), LRRDelHet2, input$LRRdev)
+      LRR[delHom & !(delHet | delHet2)] <- rnorm(sum(delHom & !(delHet | delHet2)), LRRDelHom, input$LRRdev)
       
       LRR[delHet & delHet2 & !delHom] <- rnorm(sum(delHet & delHet2 & !delHom), LRRDelHetHet2, input$LRRdev)
       LRR[delHet & delHom & !delHet2] <- rnorm(sum(delHet & delHom & !delHet2), LRRDelHetHom, input$LRRdev)
       LRR[delHet2 & delHom & !delHet] <- rnorm(sum(delHet2 & delHom & !delHet), LRRDelHet2Hom, input$LRRdev)
-      
-      LRR[delHet & !delHom & !delHet2] <- rnorm(sum(delHet & !delHom & !delHet2), LRRDelHet, input$LRRdev)
-      LRR[delHet2 & !delHom & !delHet] <- rnorm(sum(delHet2 & !delHom & !delHet), LRRDelHet2, input$LRRdev)
-      LRR[delHom & !delHet & !delHet2] <- rnorm(sum(delHom & !delHet & !delHet2), LRRDelHom, input$LRRdev)
+
+      LRR[delHet & delHet2 & delHom] <- rnorm(sum(delHet & delHet2 & delHom), LRRDelCommon, input$LRRdev)
       
       par(mar = c(5, 4, 4, 4) + 0.1)
       if (input$type == "LRR from -1 to 1") {
@@ -423,15 +424,16 @@ server <- shinyServer(function(input, output, session) {
      delHet2 <- pos >= input$Del2LBP & pos <= input$Del2RBP
      delHom <- pos >= input$DelLBP2 & pos <= input$DelRBP2
      
-     BAF[delHet & delHet2 & delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelCommon, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & delHom), replace = T)
+     BAF[delHet & !(delHom | delHet2)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet, input$BAFdev), BAFBB), size = sum(delHet & !(delHom | delHet2)), replace = T)
+     BAF[delHet2 & !(delHom | delHet)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2, input$BAFdev), BAFBB), size = sum(delHet2 & !(delHom | delHet)), replace = T)
+     BAF[delHom & !(delHet | delHet2)] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHom, input$BAFdev), BAFBB), size = sum(delHom & !(delHet | delHet2)), replace = T)
      
      BAF[delHet & delHet2 & !delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHetHet2, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & !delHom), replace = T)
      BAF[delHet & delHom & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHetHom, input$BAFdev), BAFBB), size = sum(delHet & delHom & !delHet2), replace = T)
      BAF[delHet2 & delHom & !delHet] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2Hom, input$BAFdev), BAFBB), size = sum(delHet2 & delHom & !delHet), replace = T)
      
-     BAF[delHet & !delHom & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet, input$BAFdev), BAFBB), size = sum(delHet & !delHom & !delHet2), replace = T)
-     BAF[delHet2 & !delHom & !delHet] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHet2, input$BAFdev), BAFBB), size = sum(delHet2 & !delHom & !delHet), replace = T)
-     BAF[delHom & !delHet & !delHet2] <- sample(c(BAFAA, BAFcalc(100000, BdevDelHom, input$BAFdev), BAFBB), size = sum(delHom & !delHet & !delHet2), replace = T)
+     BAF[delHet & delHet2 & delHom] <- sample(c(BAFAA, BAFcalc(100000, BdevDelCommon, input$BAFdev), BAFBB), size = sum(delHet & delHet2 & delHom), replace = T)
+     
      
      #if (input$Homdel) BAF[pos > input$DelLBP2 & pos <= input$DelRBP2] <- sample(c(BAFAA, BAFcalc(100000, BdevDel2, input$BAFdev), BAFBB), size = sum(pos > input$DelLBP2 & pos <= input$DelRBP2), replace = T)
      
@@ -440,15 +442,15 @@ server <- shinyServer(function(input, output, session) {
      
      LRR <- rnorm(length(pos), 0, input$LRRdev)
      
-     LRR[delHet & delHet2 & !delHom] <- rnorm(sum(delHet & delHet2 & !delHom), LRRDelCommon, input$LRRdev)
+     LRR[delHet & !(delHom | delHet2)] <- rnorm(sum(delHet & !(delHom | delHet2)), LRRDelHet, input$LRRdev)
+     LRR[delHet2 & !(delHom | delHet)] <- rnorm(sum(delHet2 & !(delHom | delHet)), LRRDelHet2, input$LRRdev)
+     LRR[delHom & !(delHet | delHet2)] <- rnorm(sum(delHom & !(delHet | delHet2)), LRRDelHom, input$LRRdev)
      
      LRR[delHet & delHet2 & !delHom] <- rnorm(sum(delHet & delHet2 & !delHom), LRRDelHetHet2, input$LRRdev)
      LRR[delHet & delHom & !delHet2] <- rnorm(sum(delHet & delHom & !delHet2), LRRDelHetHom, input$LRRdev)
      LRR[delHet2 & delHom & !delHet] <- rnorm(sum(delHet2 & delHom & !delHet), LRRDelHet2Hom, input$LRRdev)
      
-     LRR[delHet & !delHom & !delHet2] <- rnorm(sum(delHet & !delHom & !delHet2), LRRDelHet, input$LRRdev)
-     LRR[delHet2 & !delHom & !delHet] <- rnorm(sum(delHet2 & !delHom & !delHet), LRRDelHet2, input$LRRdev)
-     LRR[delHom & !delHet & !delHet2] <- rnorm(sum(delHom & !delHet & !delHet2), LRRDelHom, input$LRRdev)
+     LRR[delHet & delHet2 & delHom] <- rnorm(sum(delHet & delHet2 & delHom), LRRDelCommon, input$LRRdev)
      
      par(mar = c(5, 4, 4, 4) + 0.1)
      if (input$type == "LRR from -1 to 1") {
@@ -479,9 +481,13 @@ server <- shinyServer(function(input, output, session) {
      ChrDelHet <- input$CelDelHet
      ChrDelHet2 <- input$CelDelHet2
      ChrDel <- (ChrDelHet + ChrDelHet2 + ChrUPDDel + ChrUPDDel2 + ChrDelHom)
-     LRRDel <- LRRCalc(2 - ChrDel/100)
-     LRRDelA <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom)/100)
-     LRRDelB <- LRRCalc(2 - (0.5*ChrDelHom)/100)
+     LRRDelHet <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom)/100)
+     LRRDelHom <- LRRCalc(2 - (0.5*ChrDelHom)/100)
+     LRRDelHet2 <- LRRCalc(2 - (ChrDelHet2)/100)
+     LRRDelHetHom <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + ChrDelHom)/100)
+     LRRDelHet2Hom <- LRRCalc(2 - (ChrDelHet2 + 0.5*ChrDelHom)/100)
+     LRRDelHetHet2 <- LRRCalc(2 - (ChrDelHet + ChrUPDDel + ChrUPDDel2 + 0.5*ChrDelHom + ChrDelHet2)/100)
+     LRRDelCommon <- LRRCalc(2 - ChrDel/100)
      CelWT <- 100 - input$CelDelHet - input$CelDelHet2 - input$CelUPDDel - input$CelUPDDelRec - input$CelUPDDel2 - input$CelUPDDel2Rec- input$CelUPDRes - input$CelUPDResRec - input$CelDelHom - input$CelUPDRes2 - input$CelUPDRes2Rec
      BdevDel <-  abs(0.5 - (CelWT + 2*input$CelUPDRes) / (2*CelWT + 2*input$CelUPDRes + input$CelDelHet)) # Depends on a lot of elements
      BdevUPDDel <- UPDBdevCalc(abs(input$CelUPDDel - input$CelUPDDelRec))
@@ -498,10 +504,14 @@ server <- shinyServer(function(input, output, session) {
                         UPDResRec=round(input$CelUPDResRec, 2),
                         UPDRes2=round(input$CelUPDRes2, 2),
                         UPDRes2Rec=round(input$CelUPDRes2Rec, 2),
-                        HomDel=round(input$CelDelHom, 2)) 
-                        #LRRDelA=round(LRRDelA, 2),
-                        #LRRDelB=round(LRRDelB, 2),
-                        #LRRDel=round(LRRDel, 2))
+                        HomDel=round(input$CelDelHom, 2), 
+                        LRRDelHet=round(LRRDelHet, 2),
+                        LRRDelHom=round(LRRDelHom, 2),
+                        LRRDelHet2=round(LRRDelHet2, 2),
+                        LRRDelHetHom=round(LRRDelHetHom, 2),
+                        LRRDelHet2Hom=round(LRRDelHet2Hom, 2),
+                        LRRDelHetHet2=round(LRRDelHetHet2, 2),
+                        LRRDelCommon=round(LRRDelCommon, 2))
                         #UPDDelRec=round(input$CelUPDDelRec, 2),
                         #UPDResRec=round(input$CelUPDResRec, 2),
                         #UPDRes2Rec=round(input$CelUPDRes2Rec, 2))
